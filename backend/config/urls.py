@@ -24,12 +24,18 @@ urlpatterns = [
     path("api/export/", include("apps.exports.urls")),
     path("api/audit/", include("apps.audit.urls")),
 
-    # Silk profiler (dev only)
-    path("silk/", include("silk.urls", namespace="silk")),
+
 
     # Celery results
     path("api/celery/", include("django_celery_results.urls")),
 ]
+
+# Silk profiler (dev only)
+if "silk" in settings.INSTALLED_APPS:
+    urlpatterns += [
+        path("silk/", include("silk.urls", namespace="silk")),
+    ]
+
 
 # Serve media files in development
 if settings.DEBUG:
