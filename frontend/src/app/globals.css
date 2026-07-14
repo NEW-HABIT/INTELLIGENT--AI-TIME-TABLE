@@ -1,0 +1,217 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ════════════════════════════════════════════════════════════
+   CSS Custom Properties — TNU Design System
+   ════════════════════════════════════════════════════════════ */
+@layer base {
+  :root {
+    --font-inter: 'Inter', sans-serif;
+    --font-outfit: 'Outfit', sans-serif;
+    --font-jetbrains-mono: 'JetBrains Mono', monospace;
+
+    /* Light mode */
+    --background: 215 28% 97%;
+    --foreground: 215 25% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 10%;
+    --primary: 215 60% 24%;        /* TNU Navy */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 38 66% 52%;       /* TNU Amber */
+    --secondary-foreground: 0 0% 10%;
+    --muted: 215 20% 93%;
+    --muted-foreground: 215 15% 46%;
+    --accent: 174 72% 50%;         /* Teal */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 20% 88%;
+    --input: 215 20% 88%;
+    --ring: 215 60% 24%;
+    --radius: 0.75rem;
+    --chart-1: 215 60% 24%;
+    --chart-2: 38 66% 52%;
+    --chart-3: 174 72% 50%;
+    --chart-4: 262 52% 60%;
+    --chart-5: 16 72% 60%;
+  }
+
+  .dark {
+    --background: 215 35% 7%;
+    --foreground: 215 20% 95%;
+    --card: 215 30% 10%;
+    --card-foreground: 215 20% 95%;
+    --popover: 215 30% 10%;
+    --popover-foreground: 215 20% 95%;
+    --primary: 215 70% 65%;
+    --primary-foreground: 215 35% 7%;
+    --secondary: 38 66% 52%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 215 25% 15%;
+    --muted-foreground: 215 15% 60%;
+    --accent: 174 72% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 25% 18%;
+    --input: 215 25% 18%;
+    --ring: 215 70% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Component Utilities
+   ════════════════════════════════════════════════════════════ */
+@layer components {
+  /* Premium Glass Card */
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-glass;
+  }
+
+  .glass-card-dark {
+    @apply bg-black/20 backdrop-blur-md border border-white/10 rounded-2xl shadow-glass;
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-tnu-primary to-tnu-accent bg-clip-text text-transparent;
+  }
+
+  .gradient-text-gold {
+    @apply bg-gradient-to-r from-tnu-secondary to-yellow-400 bg-clip-text text-transparent;
+  }
+
+  /* Premium Sidebar Item */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium
+           transition-all duration-200 cursor-pointer
+           text-slate-400 hover:text-white hover:bg-white/10;
+  }
+
+  .sidebar-item.active {
+    @apply bg-gradient-to-r from-tnu-primary/80 to-tnu-accent/20
+           text-white border border-white/20 shadow-glow;
+  }
+
+  /* Stat Card */
+  .stat-card {
+    @apply relative overflow-hidden rounded-2xl p-6 border
+           transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1;
+  }
+
+  /* Timetable Grid Cell */
+  .timetable-slot {
+    @apply rounded-lg p-2 text-xs font-medium border transition-all duration-200
+           cursor-pointer hover:shadow-lg hover:-translate-y-0.5;
+  }
+
+  .timetable-slot.theory {
+    @apply bg-blue-500/20 border-blue-400/40 text-blue-100
+           hover:bg-blue-500/30 hover:border-blue-400/60;
+  }
+
+  .timetable-slot.lab {
+    @apply bg-emerald-500/20 border-emerald-400/40 text-emerald-100
+           hover:bg-emerald-500/30 hover:border-emerald-400/60;
+  }
+
+  .timetable-slot.empty {
+    @apply bg-white/5 border-white/10 text-white/20
+           hover:bg-white/10 hover:border-white/20;
+  }
+
+  /* Status badges */
+  .badge-completed {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold
+           bg-emerald-500/20 text-emerald-300 border border-emerald-500/30;
+  }
+
+  .badge-pending {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold
+           bg-amber-500/20 text-amber-300 border border-amber-500/30;
+  }
+
+  .badge-failed {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold
+           bg-red-500/20 text-red-300 border border-red-500/30;
+  }
+
+  .badge-running {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold
+           bg-blue-500/20 text-blue-300 border border-blue-500/30 animate-pulse;
+  }
+
+  /* Input Styles */
+  .input-dark {
+    @apply w-full px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 
+           text-white placeholder-white/40 focus:outline-none focus:border-tnu-accent/60 
+           focus:bg-white/15 transition-all duration-200;
+  }
+
+  /* Button Variants */
+  .btn-primary {
+    @apply px-6 py-2.5 rounded-xl bg-gradient-to-r from-tnu-primary to-blue-600 
+           text-white font-semibold shadow-glow transition-all duration-200
+           hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-2.5 rounded-xl bg-tnu-secondary/20 border border-tnu-secondary/40 
+           text-tnu-secondary font-semibold transition-all duration-200
+           hover:bg-tnu-secondary/30 hover:border-tnu-secondary/60;
+  }
+
+  /* Scrollbar */
+  .custom-scroll::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+  .custom-scroll::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .custom-scroll::-webkit-scrollbar-thumb {
+    @apply bg-white/20 rounded-full hover:bg-white/30;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Animation Utilities
+   ════════════════════════════════════════════════════════════ */
+@layer utilities {
+  .animate-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.1) 50%,
+      rgba(255,255,255,0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}

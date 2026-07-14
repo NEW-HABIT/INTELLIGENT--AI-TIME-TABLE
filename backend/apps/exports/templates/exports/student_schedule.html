@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Student Schedule — TNU</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 15mm;
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: system-ui, -apple-system, sans-serif;
+                font-size: 8pt;
+                color: #888888;
+            }
+        }
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            line-height: 1.4;
+        }
+        .header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .header-title {
+            font-size: 20pt;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
+        .header-subtitle {
+            font-size: 10pt;
+            color: #64748b;
+            margin: 2px 0 0 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 20px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+        }
+        .info-row {
+            display: table-row;
+        }
+        .info-cell {
+            display: table-cell;
+            padding: 6px 12px;
+            font-size: 10pt;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #475569;
+        }
+        .info-value {
+            color: #0f172a;
+        }
+        table.timetable {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 4px;
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+            vertical-align: middle;
+            border-radius: 4px;
+            font-size: 8pt;
+        }
+        th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 9pt;
+            padding: 10px 8px;
+        }
+        th.time-col {
+            width: 90px;
+            background-color: #1e293b;
+        }
+        td.time-label {
+            background-color: #f1f5f9;
+            color: #334155;
+            font-weight: 600;
+            border: 1px solid #cbd5e1;
+        }
+        td.empty-slot {
+            background-color: #fafafa;
+            border: 1px dashed #e2e8f0;
+            color: #cbd5e1;
+        }
+        td.lunch-slot {
+            background-color: #fef3c7;
+            color: #d97706;
+            font-weight: 600;
+            font-size: 9pt;
+            letter-spacing: 0.1em;
+            border: 1px solid #fde68a;
+        }
+        td.class-slot {
+            border: 1px solid transparent;
+            text-align: left;
+            padding: 8px 10px;
+        }
+        td.theory-class {
+            background-color: #eff6ff;
+            color: #1e40af;
+            border-color: #bfdbfe;
+        }
+        td.lab-class {
+            background-color: #ecfdf5;
+            color: #065f46;
+            border-color: #a7f3d0;
+        }
+        .subject-code {
+            font-weight: 700;
+            font-size: 8.5pt;
+            margin-bottom: 2px;
+        }
+        .subject-name {
+            font-weight: 500;
+            font-size: 7.5pt;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .slot-meta {
+            font-size: 7pt;
+            color: #475569;
+            margin-top: 2px;
+        }
+        .legend {
+            margin-top: 25px;
+            font-size: 8pt;
+            color: #64748b;
+        }
+        .legend-item {
+            display: inline-block;
+            margin-right: 15px;
+        }
+        .legend-color {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1 class="header-title">The Neotia University</h1>
+        <p class="header-subtitle">Intelligent Timetable Management System</p>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-row">
+            <div class="info-cell"><span class="info-label">Student Name:</span> <span class="info-value">{{ student.user.full_name }}</span></div>
+            <div class="info-cell"><span class="info-label">Enrollment No:</span> <span class="info-value">{{ student.enrollment_number }}</span></div>
+        </div>
+        <div class="info-row">
+            <div class="info-cell"><span class="info-label">Program:</span> <span class="info-value">{{ student.program.name }}</span></div>
+            <div class="info-cell"><span class="info-label">Current Section:</span> <span class="info-value">{{ section }}</span></div>
+        </div>
+    </div>
+
+    <table class="timetable">
+        <thead>
+            <tr>
+                <th class="time-col">Time</th>
+                {% for day_idx, day_name in days %}
+                    <th>{{ day_name }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td class="time-label">{{ row.time_label }}</td>
+                    {% if row.slot_type == "LUNCH" %}
+                        <td colspan="{{ days|length }}" class="lunch-slot">LUNCH BREAK</td>
+                    {% else %}
+                        {% for slot in row.days %}
+                            {% if slot %}
+                                <td class="class-slot {% if slot.is_lab_block %}lab-class{% else %}theory-class{% endif %}">
+                                    <div class="subject-code">{{ slot.allocation.subject.code }}</div>
+                                    <div class="subject-name" title="{{ slot.allocation.subject.name }}">{{ slot.allocation.subject.name }}</div>
+                                    <div class="slot-meta">📍 Room {{ slot.room.number }}</div>
+                                    <div class="slot-meta">👨‍🏫 {{ slot.allocation.faculty.user.full_name }}</div>
+                                </td>
+                            {% else %}
+                                <td class="empty-slot">-</td>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="legend">
+        <span class="legend-item"><span class="legend-color" style="background-color: #eff6ff; border: 1px solid #bfdbfe;"></span> Theory</span>
+        <span class="legend-item"><span class="legend-color" style="background-color: #ecfdf5; border: 1px solid #a7f3d0;"></span> Practical / Lab</span>
+        <span class="legend-item"><span class="legend-color" style="background-color: #fef3c7; border: 1px solid #fde68a;"></span> Lunch Break</span>
+    </div>
+
+</body>
+</html>
