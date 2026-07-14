@@ -139,7 +139,7 @@ else:
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": config("REDIS_URL", default="redis://redis:6379/0"),
+        "LOCATION": config("REDIS_URL", default="redis://redis:6379/0").replace("ssl_cert_reqs=CERT_NONE", "ssl_cert_reqs=none"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "SOCKET_CONNECT_TIMEOUT": 5,
@@ -158,7 +158,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [config("REDIS_URL", default="redis://redis:6379/0")],
+            "hosts": [config("REDIS_URL", default="redis://redis:6379/0").replace("ssl_cert_reqs=CERT_NONE", "ssl_cert_reqs=none")],
         },
     },
 }
