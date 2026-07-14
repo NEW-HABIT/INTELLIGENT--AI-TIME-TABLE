@@ -47,6 +47,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+ENV DJANGO_SECRET_KEY=dummy_key_for_collectstatic
 RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
