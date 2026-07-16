@@ -1,33 +1,38 @@
 "use client";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api";
 import { motion } from "framer-motion";
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, AreaChart, Area } from "recharts";
 import { BarChart3, TrendingUp, Users, BookOpen, Clock, Activity } from "lucide-react";
 
-const weeklyLoadData = [
-  { day: "Monday", classes: 42, rooms: 18, utilization: 75 },
-  { day: "Tuesday", classes: 38, rooms: 16, utilization: 68 },
-  { day: "Wednesday", classes: 45, rooms: 20, utilization: 83 },
-  { day: "Thursday", classes: 40, rooms: 17, utilization: 71 },
-  { day: "Friday", classes: 35, rooms: 15, utilization: 62 },
-  { day: "Saturday", classes: 20, rooms: 10, utilization: 42 },
-];
-
-const deptData = [
-  { name: "Comp. Science", faculty: 12, courses: 24, hours: 88 },
-  { name: "Robotics & ECE", faculty: 8, courses: 16, hours: 64 },
-  { name: "Marine Eng.", faculty: 10, courses: 18, hours: 72 },
-  { name: "Agriculture", faculty: 6, courses: 12, hours: 48 },
-  { name: "Management", faculty: 7, courses: 14, hours: 42 },
-];
-
-const classDistribution = [
-  { name: "Theory", value: 65, color: "#1e3a5f" },
-  { name: "Labs", value: 20, color: "#2dd4bf" },
-  { name: "Tutorials", value: 10, color: "#c8922a" },
-  { name: "Seminars", value: 5, color: "#a855f7" },
-];
-
 export default function AnalyticsPage() {
+  const { data: overviewData } = useQuery({
+    queryKey: ["admin-analytics-overview"],
+    queryFn: () => apiClient.get("/analytics/overview/").then(r => r.data),
+    refetchInterval: 5000,
+    initialData: {
+      summary: [],
+      weekly_load: [],
+      class_distribution: [],
+      department_breakdown: []
+    },
+  });
+
+  const summaryStats = overviewData.summary || [];
+  const weeklyLoadData = overviewData.weekly_load || [];
+  const classDistribution = overviewData.class_distribution || [];
+  const deptData = overviewData.department_breakdown || [];
+
+  const getIcon = (iconName: string) => {
+    switch (iconName) {
+      case "Activity": return Activity;
+      case "Clock": return Clock;
+      case "Users": return Users;
+      case "BookOpen": return BookOpen;
+      default: return Activity;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -38,29 +43,27 @@ export default function AnalyticsPage() {
 
       {/* Mini Stats Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Overall Load", value: "220 Classes", icon: Activity, change: "+12% this week", color: "text-tnu-accent" },
-          { label: "Average Room Util.", value: "71.2%", icon: Clock, change: "Optimal usage", color: "text-tnu-secondary" },
-          { label: "Faculty Utilization", value: "84.5%", icon: Users, change: "+3.2% vs last sem", color: "text-emerald-400" },
-          { label: "Subject Coverage", value: "84 Course Modules", icon: BookOpen, change: "100% scheduled", color: "text-purple-400" },
-        ].map((stat, idx) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            className="p-5 rounded-2xl bg-[#0d1f35] border border-white/10"
-          >
-            <div className="flex justify-between items-start">
-              <span className="text-white/40 text-xs font-semibold uppercase tracking-wider">{stat.label}</span>
-              <stat.icon className={`w-5 h-5 ${stat.color}`} />
-            </div>
-            <p className="text-white text-2xl font-bold font-display mt-2">{stat.value}</p>
-            <span className="text-[10px] text-white/30 mt-1 block flex items-center gap-1">
-              <TrendingUp className="w-3 h-3 text-emerald-400" /> {stat.change}
-            </span>
-          </motion.div>
-        ))}
+        {summaryStats.map((stat: any, idx: number) => {
+          const IconComponent = getIcon(stat.icon);
+          return (
+            <motion.div
+              key={stat.label || idx}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              className="p-5 rounded-2xl bg-[#0d1f35] border border-white/10"
+            >
+              <div className="flex justify-between items-start">
+                <span className="text-white/40 text-xs font-semibold uppercase tracking-wider">{stat.label}</span>
+                <IconComponent className={`w-5 h-5 ${stat.color}`} />
+              </div>
+              <p className="text-white text-2xl font-bold font-display mt-2">{stat.value}</p>
+              <span className="text-[10px] text-white/30 mt-1 block flex items-center gap-1">
+                <TrendingUp className="w-3 h-3 text-emerald-400" /> {stat.change}
+              </span>
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Main Charts Grid */}

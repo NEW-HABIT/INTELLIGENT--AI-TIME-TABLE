@@ -51,6 +51,9 @@ def generate_timetable(self, generation_id: str):
 
     logger.info(f"Starting timetable generation task for generation_id={generation_id}")
 
+    from django.db import connections
+    connections.close_all()
+
     try:
         generation = TimetableGeneration.objects.select_related("semester").get(id=generation_id)
     except TimetableGeneration.DoesNotExist:
@@ -66,9 +69,14 @@ def generate_timetable(self, generation_id: str):
 
     def progress_reporter(progress: int, message: str):
         """Called by solver during optimization to report progress"""
-        generation.progress_percent = progress
-        generation.save(update_fields=["progress_percent"])
-        send_ws_progress(generation_id, progress, message)
+        try:
+            from django.db import connections
+            connections.close_all()
+            generation.progress_percent = progress
+            generation.save(update_fields=["progress_percent"])
+            send_ws_progress(generation_id, progress, message)
+        except Exception as e:
+            logger.warning(f"Error updating generation progress in DB: {e}")
 
     try:
         # Load data
@@ -92,6 +100,10 @@ def generate_timetable(self, generation_id: str):
         )
         result = solver.solve()
 
+        # Ensure clean DB connection before saving results
+        from django.db import connections
+        connections.close_all()
+
         # Save results to DB
         if result.status in ("OPTIMAL", "FEASIBLE"):
             send_ws_progress(generation_id, 95, "Saving timetable to database...")
@@ -99,14 +111,18 @@ def generate_timetable(self, generation_id: str):
             # Clear old slots for this generation
             TimetableSlot.objects.filter(generation=generation, is_locked=False).delete()
 
-            # Build time slot lookup
+            # Build lookups in memory for ultra-fast saving (0 network loop queries)
+            alloc_map = {str(a.id): a for a in SubjectAllocation.objects.filter(semester=generation.semester)}
+            room_map = {str(r.id): r for r in Room.objects.all()}
             all_time_slots = list(TimeSlot.objects.all().order_by("day", "slot_number"))
 
             # Save each scheduled slot
             slots_to_create = []
             for sched in result.timetable:
-                alloc = SubjectAllocation.objects.get(id=sched["allocation_id"])
-                room = Room.objects.get(id=sched["room_id"])
+                alloc = alloc_map.get(str(sched["allocation_id"]))
+                room = room_map.get(str(sched["room_id"]))
+                if not alloc or not room:
+                    continue
 
                 slot_obj = TimetableSlot(
                     generation=generation,
@@ -117,18 +133,24 @@ def generate_timetable(self, generation_id: str):
                 )
                 slots_to_create.append((slot_obj, sched))
 
-            # Bulk create slots
+            # Bulk create slots in 1 single fast query
             created_slots = TimetableSlot.objects.bulk_create(
                 [s for s, _ in slots_to_create]
             )
 
-            # Assign time slots (M2M — must be done after creation)
+            # Assign time slots (M2M bulk create — 1 single query instead of N loops)
+            m2m_through = TimetableSlot.time_slots.through
+            m2m_objects = []
             for slot_obj, sched in zip(created_slots, [s for _, s in slots_to_create]):
                 day_ts = [ts for ts in all_time_slots if ts.day == sched["day"]]
                 start = sched["slot_start"]
                 end = sched["slot_end"]
                 slot_day_slots = [ts for ts in day_ts if start <= ts.slot_number < end]
-                slot_obj.time_slots.set(slot_day_slots)
+                for ts in slot_day_slots:
+                    m2m_objects.append(m2m_through(timetableslot_id=slot_obj.id, timeslot_id=ts.id))
+
+            if m2m_objects:
+                m2m_through.objects.bulk_create(m2m_objects, ignore_conflicts=True)
 
             # Mark this generation as active
             generation.status = GenerationStatus.COMPLETED
@@ -180,6 +202,8 @@ def generate_timetable(self, generation_id: str):
         generation.save(update_fields=["status", "completed_at", "solver_stats"])
         send_ws_progress(generation_id, 0, f"❌ Error: {str(exc)}", "FAILED")
         raise
+    finally:
+        connections.close_all()
 
 
 @shared_task(name="apps.scheduling.tasks.cleanup_old_generations")

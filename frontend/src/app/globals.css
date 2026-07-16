@@ -8,7 +8,8 @@
    CSS Custom Properties — TNU Design System
    ════════════════════════════════════════════════════════════ */
 @layer base {
-  :root {
+  :root, html {
+    color-scheme: dark;
     --font-inter: 'Inter', sans-serif;
     --font-outfit: 'Outfit', sans-serif;
     --font-jetbrains-mono: 'JetBrains Mono', monospace;
@@ -71,9 +72,20 @@
   body {
     @apply bg-background text-foreground font-sans;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    color-scheme: dark;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-display tracking-tight;
+  }
+  select, select *, option, optgroup {
+    color-scheme: dark !important;
+    background-color: #0d1f35 !important;
+    color: #ffffff !important;
+  }
+  select:focus, select:active, option:checked, option:hover, option:focus {
+    color-scheme: dark !important;
+    background-color: #1e3a5f !important;
+    color: #ffffff !important;
   }
 }
 

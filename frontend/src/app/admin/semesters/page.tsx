@@ -142,9 +142,14 @@ export default function SemestersPage() {
     e.preventDefault();
     if (!yearStart || !yearEnd) return;
 
+    const ys = parseInt(yearStart, 10);
+    const ye = parseInt(yearEnd, 10);
+    const generatedLabel = `${ys}-${ye.toString().slice(-2)}`;
+
     createYearMutation.mutate({
-      year_start: parseInt(yearStart, 10),
-      year_end: parseInt(yearEnd, 10),
+      year_start: ys,
+      year_end: ye,
+      label: generatedLabel,
       is_current: false,
     });
   };

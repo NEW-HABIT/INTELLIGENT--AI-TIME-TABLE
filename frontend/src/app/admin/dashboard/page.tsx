@@ -47,53 +47,29 @@ function StatCard({
 
 const COLORS = ["#1e3a5f", "#c8922a", "#2dd4bf", "#a855f7", "#ef4444"];
 
-const weeklyData = [
-  { day: "Mon", classes: 42, rooms: 18 },
-  { day: "Tue", classes: 38, rooms: 16 },
-  { day: "Wed", classes: 45, rooms: 20 },
-  { day: "Thu", classes: 40, rooms: 17 },
-  { day: "Fri", classes: 35, rooms: 15 },
-  { day: "Sat", classes: 20, rooms: 10 },
-];
-
 export default function AdminDashboard() {
-  const { data: stats } = useQuery({
-    queryKey: ["admin-stats"],
-    queryFn: async () => {
-      const [depts, faculty, students, rooms] = await Promise.all([
-        apiClient.get("/departments/?page_size=1"),
-        apiClient.get("/faculty/?page_size=1"),
-        apiClient.get("/students/?page_size=1"),
-        apiClient.get("/rooms/?page_size=1"),
-      ]);
-      return {
-        departments: depts.data.count || 0,
-        faculty: faculty.data.count || 0,
-        students: students.data.count || 0,
-        rooms: rooms.data.count || 0,
-      };
+  const { data: dashboardData } = useQuery({
+    queryKey: ["admin-dashboard-analytics"],
+    queryFn: () => apiClient.get("/analytics/dashboard/").then(r => r.data),
+    refetchInterval: 5000,
+    initialData: {
+      stats: { departments: 0, faculty: 0, students: 0, rooms: 0 },
+      weekly_load: [],
+      class_types: [],
+      recent_generations: []
     },
-    initialData: { departments: 0, faculty: 0, students: 0, rooms: 0 },
   });
 
-  const { data: generations } = useQuery({
-    queryKey: ["recent-generations"],
-    queryFn: () => apiClient.get("/scheduling/generations/?page_size=5").then(r => r.data.results || []),
-    initialData: [],
-  });
+  const stats = dashboardData.stats || { departments: 0, faculty: 0, students: 0, rooms: 0 };
+  const weeklyData = dashboardData.weekly_load || [];
+  const pieData = dashboardData.class_types || [];
+  const generations = dashboardData.recent_generations || [];
 
   const statCards = [
     { icon: Building2, label: "Departments", value: stats.departments, color: "from-blue-600 to-blue-800", trend: "+2 this year", sub: "Active departments" },
     { icon: UserCheck, label: "Faculty Members", value: stats.faculty, color: "from-emerald-600 to-emerald-800", trend: "+5 this sem", sub: "Teaching staff" },
     { icon: GraduationCap, label: "Students", value: stats.students, color: "from-purple-600 to-purple-800", trend: "+120 enrolled", sub: "Enrolled students" },
     { icon: Building2, label: "Rooms", value: stats.rooms, color: "from-amber-600 to-amber-800", sub: "Theory + Labs" },
-  ];
-
-  const pieData = [
-    { name: "Theory", value: 65 },
-    { name: "Labs", value: 20 },
-    { name: "Tutorials", value: 10 },
-    { name: "Seminars", value: 5 },
   ];
 
   return (

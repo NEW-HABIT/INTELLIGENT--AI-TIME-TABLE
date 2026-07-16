@@ -7,9 +7,18 @@ from .models import (
 
 
 class AcademicYearSerializer(serializers.ModelSerializer):
+    label = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = AcademicYear
         fields = "__all__"
+
+    def create(self, validated_data):
+        if not validated_data.get("label"):
+            ys = validated_data.get("year_start", "")
+            ye = str(validated_data.get("year_end", ""))[-2:]
+            validated_data["label"] = f"{ys}-{ye}"
+        return super().create(validated_data)
 
 
 class SemesterSerializer(serializers.ModelSerializer):

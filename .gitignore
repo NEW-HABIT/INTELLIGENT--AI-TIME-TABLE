@@ -2,3 +2,30 @@
 README.md
 .env.example
 ANOTHER.md
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+backend/logs/
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Node / Next.js
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+out/
+build/
+dist/
+.env*.local
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

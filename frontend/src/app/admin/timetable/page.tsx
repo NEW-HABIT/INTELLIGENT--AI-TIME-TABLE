@@ -17,6 +17,7 @@ import {
   Clock,
   Sparkles,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { toast } from "sonner";
@@ -161,6 +162,22 @@ export default function TimetableManagementPage() {
     },
   });
 
+  // Delete Timetable Generation Mutation
+  const deleteMutation = useMutation({
+    mutationFn: (genId: string) => apiClient.delete(`/scheduling/generations/${genId}/`),
+    onSuccess: (_, deletedId) => {
+      queryClient.invalidateQueries({ queryKey: ["generations"] });
+      queryClient.invalidateQueries({ queryKey: ["timetable-slots"] });
+      if (selectedGen?.id === deletedId) {
+        setSelectedGen(null);
+      }
+      toast.success("Timetable version and all its slots permanently deleted from Supabase!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error || "Failed to delete timetable version.");
+    },
+  });
+
   // Update Slot Mutation (Manual Moves)
   const updateSlotMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => apiClient.put(`/scheduling/slots/${id}/`, data),
@@ -199,14 +216,25 @@ export default function TimetableManagementPage() {
 
   // Restructure the slots from generation/timetable API into the structure expected by TimetableGrid
   const rawSlots = timetableData?.timetable || {};
-  const currentSectionName =
-    sectionsList?.find((s: any) => s.id === selectedSectionId)?.name ||
-    sectionsList?.[0]?.name;
+  const currentSectionObj =
+    Array.isArray(sectionsList) && sectionsList.find((s: any) => s.id === selectedSectionId)
+      ? sectionsList.find((s: any) => s.id === selectedSectionId)
+      : Array.isArray(sectionsList) ? sectionsList[0] : null;
+
+  const currentSectionId = currentSectionObj?.id || selectedSectionId;
+  const currentSectionName = currentSectionObj?.name;
 
   // Flatten slots for selected section
   const sectionSlots: any[] = [];
   Object.keys(rawSlots).forEach((dayKey) => {
-    const daySectionSlots = rawSlots[dayKey][currentSectionName] || [];
+    const dayObj = rawSlots[dayKey] || {};
+    const daySectionSlots =
+      (currentSectionId && dayObj[currentSectionId]) ||
+      (currentSectionName && dayObj[currentSectionName]) ||
+      (currentSectionObj && dayObj[`${currentSectionObj.program_code} Sem-${currentSectionObj.semester_number} Section-${currentSectionName}`]) ||
+      Object.values(dayObj)[0] ||
+      [];
+
     daySectionSlots.forEach((slot: any) => {
       sectionSlots.push({
         id: slot.id,
@@ -304,6 +332,21 @@ export default function TimetableManagementPage() {
                 Activate Version
               </button>
             )}
+            {selectedGen && (
+              <button
+                onClick={() => {
+                  if (confirm(`Are you sure you want to permanently delete Version ${selectedGen.version} from Supabase? This will remove all slots for this version.`)) {
+                    deleteMutation.mutate(selectedGen.id);
+                  }
+                }}
+                disabled={deleteMutation.isPending}
+                className="px-2.5 py-1.5 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold hover:bg-red-500/30 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                title="Delete this timetable version from Supabase"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -350,7 +393,7 @@ export default function TimetableManagementPage() {
                               : "bg-white/5 border-white/10 text-white/60 hover:text-white"
                           }`}
                         >
-                          {sec.name}
+                          {sec.program_code ? `${sec.program_code} Sec-${sec.name}` : `Section ${sec.name}`}
                         </button>
                       ))}
                   </div>
@@ -403,6 +446,27 @@ export default function TimetableManagementPage() {
                     >
                       {gen.status}
                     </span>
+                    {gen.status === "COMPLETED" && !gen.is_active && (
+                      <button
+                        onClick={() => activateMutation.mutate(gen.id)}
+                        disabled={activateMutation.isPending}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold hover:bg-emerald-600/30 transition-all"
+                      >
+                        Activate
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (confirm(`Permanently delete Version ${gen.version} and all its slots from Supabase?`)) {
+                          deleteMutation.mutate(gen.id);
+                        }
+                      }}
+                      disabled={deleteMutation.isPending}
+                      className="p-1.5 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-all disabled:opacity-50"
+                      title="Delete this run from Supabase"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
 
                   {/* Progress Bar (Visible when running) */}

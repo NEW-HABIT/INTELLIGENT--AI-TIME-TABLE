@@ -42,3 +42,6 @@ if SENTRY_DSN:
 SILKY_PYTHON_PROFILER = False
 MIDDLEWARE = [m for m in MIDDLEWARE if "silk" not in m]  # noqa: F405
 INSTALLED_APPS = [a for a in INSTALLED_APPS if "silk" not in a]  # noqa: F405
+
+
+

@@ -98,11 +98,11 @@ ASGI_APPLICATION = "config.asgi.application"
 _DATABASE_URL = config("DATABASE_URL", default="")
 
 if _DATABASE_URL:
-    # Supabase (or any Postgres) via connection string
+    # Supabase (or any Postgres) via connection string — set conn_max_age=0 to avoid hoarding connections in Supabase session pool
     DATABASES = {
         "default": dj_database_url.parse(
             _DATABASE_URL,
-            conn_max_age=600,
+            conn_max_age=config("CONN_MAX_AGE", default=0, cast=int),
             conn_health_checks=True,
         )
     }
@@ -127,7 +127,7 @@ else:
                 "PASSWORD": config("POSTGRES_PASSWORD", default="tnu_secret_password"),
                 "HOST": config("POSTGRES_HOST", default="db"),
                 "PORT": config("POSTGRES_PORT", default="5432"),
-                "CONN_MAX_AGE": 60,
+                "CONN_MAX_AGE": config("CONN_MAX_AGE", default=0, cast=int),
                 "OPTIONS": {
                     "connect_timeout": 10,
                 },

@@ -56,9 +56,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}
+      className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable} dark`}
+      style={{ colorScheme: "dark" }}
     >
-      <body className="antialiased min-h-screen bg-background">
+      <body className="antialiased min-h-screen bg-background text-foreground dark" style={{ colorScheme: "dark" }}>
         <QueryProvider>
           {children}
           <Toaster

@@ -30,25 +30,32 @@ class SolverResult:
 
 
 class ProgressCallback(cp_model.CpSolverSolutionCallback):
-    """Callback to report solver progress via WebSocket"""
+    """Callback to report solver progress via WebSocket with connection throttling"""
 
     def __init__(self, progress_reporter=None):
         super().__init__()
         self._progress_reporter = progress_reporter
         self._solution_count = 0
         self._best_objective = None
+        self._last_report_time = 0.0
 
     def on_solution_callback(self):
+        import time
         self._solution_count += 1
         obj = self.ObjectiveValue()
         if self._best_objective is None or obj < self._best_objective:
             self._best_objective = obj
             logger.info(f"New best solution found: objective={obj}, solutions={self._solution_count}")
-            if self._progress_reporter:
-                self._progress_reporter(
-                    progress=min(90, 30 + self._solution_count * 5),
-                    message=f"Found solution #{self._solution_count} (score: {obj})"
-                )
+            now = time.time()
+            if self._progress_reporter and (now - self._last_report_time >= 1.5 or self._solution_count == 1):
+                self._last_report_time = now
+                try:
+                    self._progress_reporter(
+                        progress=min(90, 30 + self._solution_count * 5),
+                        message=f"Found solution #{self._solution_count} (score: {obj})"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to report progress callback: {e}")
 
 
 class TimetableSolver:

@@ -232,10 +232,11 @@ export default function RoomsPage() {
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
           className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-tnu-accent/50"
+          style={{ colorScheme: "dark", backgroundColor: "#0d1f35", color: "#ffffff" }}
         >
-          <option value="" className="bg-[#0a1628]">All Types</option>
+          <option value="" className="bg-[#0a1628]" style={{ colorScheme: "dark", backgroundColor: "#0d1f35", color: "#ffffff" }}>All Types</option>
           {ROOM_TYPES.map((t) => (
-            <option key={t.value} value={t.value} className="bg-[#0a1628]">
+            <option key={t.value} value={t.value} className="bg-[#0a1628]" style={{ colorScheme: "dark", backgroundColor: "#0d1f35", color: "#ffffff" }}>
               {t.label}
             </option>
           ))}
@@ -245,10 +246,11 @@ export default function RoomsPage() {
           value={blockFilter}
           onChange={(e) => setBlockFilter(e.target.value)}
           className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-tnu-accent/50"
+          style={{ colorScheme: "dark", backgroundColor: "#0d1f35", color: "#ffffff" }}
         >
-          <option value="" className="bg-[#0a1628]">All Blocks</option>
+          <option value="" className="bg-[#0a1628]" style={{ colorScheme: "dark", backgroundColor: "#0d1f35", color: "#ffffff" }}>All Blocks</option>
           {uniqueBlocks.map((b) => (
-            <option key={b} value={b} className="bg-[#0a1628]">
+            <option key={b} value={b} className="bg-[#0a1628]" style={{ colorScheme: "dark", backgroundColor: "#0d1f35", color: "#ffffff" }}>
               {b}
             </option>
           ))}
@@ -425,10 +427,11 @@ export default function RoomsPage() {
                     <select
                       value={roomType}
                       onChange={(e) => setRoomType(e.target.value)}
-                      className="input-dark text-sm py-2 bg-[#0d1f35]"
+                      className="input-dark text-sm py-2 bg-[#0d1f35] text-white"
+                      style={{ colorScheme: "dark", backgroundColor: "#0d1f35", color: "#ffffff" }}
                     >
                       {ROOM_TYPES.map((t) => (
-                        <option key={t.value} value={t.value}>
+                        <option key={t.value} value={t.value} className="bg-[#0d1f35] text-white" style={{ colorScheme: "dark", backgroundColor: "#0d1f35", color: "#ffffff" }}>
                           {t.label}
                         </option>
                       ))}
@@ -439,12 +442,13 @@ export default function RoomsPage() {
                     <select
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
-                      className="input-dark text-sm py-2 bg-[#0d1f35]"
+                      className="input-dark text-sm py-2 bg-[#0d1f35] text-white"
+                      style={{ colorScheme: "dark", backgroundColor: "#0d1f35", color: "#ffffff" }}
                     >
-                      <option value="">Shared / Common</option>
+                      <option value="" className="bg-[#0d1f35] text-white" style={{ colorScheme: "dark", backgroundColor: "#0d1f35", color: "#ffffff" }}>Shared / Common</option>
                       {Array.isArray(deptsList) &&
                         deptsList.map((d: any) => (
-                          <option key={d.id} value={d.id}>
+                          <option key={d.id} value={d.id} className="bg-[#0d1f35] text-white" style={{ colorScheme: "dark", backgroundColor: "#0d1f35", color: "#ffffff" }}>
                             {d.name}
                           </option>
                         ))}

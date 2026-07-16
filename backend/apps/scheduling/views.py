@@ -158,6 +158,26 @@ class TimetableGenerationViewSet(viewsets.ModelViewSet):
             status=status.HTTP_202_ACCEPTED,
         )
 
+    def destroy(self, request, *args, **kwargs):
+        """Delete a generation version and all its slots from Supabase, promoting previous version if active"""
+        generation = self.get_object()
+        semester_id = generation.semester_id
+        was_active = generation.is_active
+
+        response = super().destroy(request, *args, **kwargs)
+
+        # If we just deleted the currently active timetable, promote the latest remaining completed version
+        if was_active:
+            latest_completed = TimetableGeneration.objects.filter(
+                semester_id=semester_id,
+                status=GenerationStatus.COMPLETED
+            ).order_by("-version", "-created_at").first()
+            if latest_completed:
+                latest_completed.is_active = True
+                latest_completed.save(update_fields=["is_active"])
+
+        return response
+
     @action(detail=True, methods=["get"])
     def status_check(self, request, pk=None):
         """Poll generation status"""
@@ -188,16 +208,21 @@ class TimetableGenerationViewSet(viewsets.ModelViewSet):
             "room",
         ).prefetch_related("time_slots").all()
 
-        # Organize by day and section
+        # Organize by day and section (using ID, string representation, and short name for robust lookup)
         timetable = {}
         for slot in slots:
             day = slot.day
-            section_name = str(slot.allocation.section)
+            sec = slot.allocation.section
+            sec_id = str(sec.id)
+            sec_full = str(sec)
+            sec_short = sec.name
+
             if day not in timetable:
                 timetable[day] = {}
-            if section_name not in timetable[day]:
-                timetable[day][section_name] = []
-            timetable[day][section_name].append(TimetableSlotSerializer(slot).data)
+            for k in set([sec_id, sec_full, sec_short]):
+                if k not in timetable[day]:
+                    timetable[day][k] = []
+                timetable[day][k].append(TimetableSlotSerializer(slot).data)
 
         return Response({
             "generation": TimetableGenerationSerializer(generation).data,
