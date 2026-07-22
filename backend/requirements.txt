@@ -13,7 +13,7 @@ django-extensions==3.2.3
 djangorestframework-simplejwt==5.3.1
 
 # ── Database ──────────────────────────────────────────────
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.12
 dj-database-url==2.3.0
 
 # ── Cache & Async ─────────────────────────────────────────
@@ -30,10 +30,10 @@ django-celery-results==2.5.1
 flower==2.0.1
 
 # ── OR-Tools Scheduling Engine ────────────────────────────
-ortools==9.11.4210
+ortools>=9.11
 
 # ── Google Gemini AI ──────────────────────────────────────
-google-generativeai==0.8.3
+google-genai>=1.0.0
 google-api-core>=2.19.1
 
 # ── API Documentation ─────────────────────────────────────
@@ -42,7 +42,7 @@ drf-spectacular==0.27.2
 # ── Export: PDF & Excel ───────────────────────────────────
 weasyprint==63.1
 openpyxl==3.1.5
-Pillow==11.0.0
+Pillow>=11.1.0
 
 # ── Production Server ─────────────────────────────────────
 gunicorn==23.0.0

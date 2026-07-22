@@ -64,7 +64,7 @@ def generate_timetable(self, generation_id: str):
     generation.status = GenerationStatus.RUNNING
     generation.started_at = timezone.now()
     generation.progress_percent = 0
-    generation.celery_task_id = self.request.id
+    generation.celery_task_id = self.request.id or "manual"
     generation.save(update_fields=["status", "started_at", "progress_percent", "celery_task_id"])
 
     def progress_reporter(progress: int, message: str):

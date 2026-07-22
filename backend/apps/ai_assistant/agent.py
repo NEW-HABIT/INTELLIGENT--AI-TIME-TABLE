@@ -12,7 +12,8 @@ import json
 import logging
 from typing import Optional
 from django.conf import settings
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from .tools import TIMETABLE_TOOLS, execute_tool
 
@@ -60,14 +61,15 @@ Never make up information — use the tools to get real data.
         if not settings.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY is not configured in settings.")
 
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-
-        self.model = genai.GenerativeModel(
-            model_name=settings.GEMINI_MODEL,
-            system_instruction=self.SYSTEM_PROMPT,
-            tools=TIMETABLE_TOOLS,
+        self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        self.model_name = settings.GEMINI_MODEL
+        self.chat = self.client.chats.create(
+            model=self.model_name,
+            config=types.GenerateContentConfig(
+                system_instruction=self.SYSTEM_PROMPT,
+                tools=TIMETABLE_TOOLS,
+            ),
         )
-        self.chat = self.model.start_chat(enable_automatic_function_calling=False)
 
     def chat_message(self, user_message: str, history: list = None) -> dict:
         """
@@ -95,16 +97,15 @@ Never make up information — use the tools to get real data.
 
             while iteration < max_iterations:
                 iteration += 1
-                # Check if there are function calls in the response
                 has_function_calls = False
                 tool_results = []
 
-                for part in response.parts:
-                    if hasattr(part, "function_call") and part.function_call:
+                for part in response.candidates[0].content.parts:
+                    if part.function_call:
                         has_function_calls = True
                         fc = part.function_call
                         tool_name = fc.name
-                        tool_args = dict(fc.args)
+                        tool_args = dict(fc.args) if fc.args else {}
 
                         # Add semester context to tools that need it
                         if self.semester_id and "semester_id" not in tool_args:
@@ -128,8 +129,8 @@ Never make up information — use the tools to get real data.
                             result = {"error": str(e), "success": False}
 
                         tool_results.append(
-                            genai.protos.Part(
-                                function_response=genai.protos.FunctionResponse(
+                            types.Part(
+                                function_response=types.FunctionResponse(
                                     name=tool_name,
                                     response={"result": result},
                                 )
@@ -144,8 +145,8 @@ Never make up information — use the tools to get real data.
 
             # Extract final text response
             reply = ""
-            for part in response.parts:
-                if hasattr(part, "text") and part.text:
+            for part in response.candidates[0].content.parts:
+                if part.text:
                     reply += part.text
 
             return {

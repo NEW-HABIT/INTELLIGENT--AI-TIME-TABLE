@@ -1,140 +1,140 @@
 """AI Assistant tool definitions and executors for Gemini function calling"""
 import logging
 from typing import Any
-import google.generativeai as genai
+from google.genai import types
 
 logger = logging.getLogger("apps.ai_assistant.tools")
 
 # ── Tool Definitions (Gemini function declarations) ────────────────────────
 TIMETABLE_TOOLS = [
-    genai.protos.Tool(
+    types.Tool(
         function_declarations=[
-            genai.protos.FunctionDeclaration(
+            types.FunctionDeclaration(
                 name="get_free_rooms",
                 description="Find rooms that are available on a specific day and time range",
-                parameters=genai.protos.Schema(
-                    type=genai.protos.Type.OBJECT,
+                parameters=types.Schema(
+                    type=types.Type.OBJECT,
                     properties={
-                        "day": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "day": types.Schema(
+                            type=types.Type.STRING,
                             description="Day name: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday"
                         ),
-                        "start_time": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "start_time": types.Schema(
+                            type=types.Type.STRING,
                             description="Start time in HH:MM format, e.g. 10:00"
                         ),
-                        "end_time": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "end_time": types.Schema(
+                            type=types.Type.STRING,
                             description="End time in HH:MM format, e.g. 11:00"
                         ),
-                        "room_type": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "room_type": types.Schema(
+                            type=types.Type.STRING,
                             description="THEORY, LAB, or SEMINAR. Leave empty for any type."
                         ),
-                        "min_capacity": genai.protos.Schema(
-                            type=genai.protos.Type.INTEGER,
+                        "min_capacity": types.Schema(
+                            type=types.Type.INTEGER,
                             description="Minimum room capacity needed"
                         ),
-                        "semester_id": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "semester_id": types.Schema(
+                            type=types.Type.STRING,
                             description="Semester ID to check against"
                         ),
                     },
                     required=["day", "start_time", "end_time", "semester_id"]
                 ),
             ),
-            genai.protos.FunctionDeclaration(
+            types.FunctionDeclaration(
                 name="get_faculty_schedule",
                 description="Get a faculty member's weekly schedule or schedule for a specific day",
-                parameters=genai.protos.Schema(
-                    type=genai.protos.Type.OBJECT,
+                parameters=types.Schema(
+                    type=types.Type.OBJECT,
                     properties={
-                        "faculty_name": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "faculty_name": types.Schema(
+                            type=types.Type.STRING,
                             description="Full or partial name of the faculty member"
                         ),
-                        "day": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "day": types.Schema(
+                            type=types.Type.STRING,
                             description="Specific day, or 'all' for full week"
                         ),
-                        "semester_id": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "semester_id": types.Schema(
+                            type=types.Type.STRING,
                             description="Semester ID"
                         ),
                     },
                     required=["faculty_name", "semester_id"]
                 ),
             ),
-            genai.protos.FunctionDeclaration(
+            types.FunctionDeclaration(
                 name="move_timetable_slot",
                 description="Move a scheduled class to a new time and/or room. Validates no conflicts before moving.",
-                parameters=genai.protos.Schema(
-                    type=genai.protos.Type.OBJECT,
+                parameters=types.Schema(
+                    type=types.Type.OBJECT,
                     properties={
-                        "slot_id": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "slot_id": types.Schema(
+                            type=types.Type.STRING,
                             description="ID of the timetable slot to move"
                         ),
-                        "new_day": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "new_day": types.Schema(
+                            type=types.Type.STRING,
                             description="New day: Monday, Tuesday, etc."
                         ),
-                        "new_start_time": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "new_start_time": types.Schema(
+                            type=types.Type.STRING,
                             description="New start time HH:MM"
                         ),
-                        "new_room_number": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "new_room_number": types.Schema(
+                            type=types.Type.STRING,
                             description="New room number, e.g. B-201"
                         ),
                     },
                     required=["slot_id"]
                 ),
             ),
-            genai.protos.FunctionDeclaration(
+            types.FunctionDeclaration(
                 name="get_section_timetable",
                 description="Get the complete timetable for a specific section",
-                parameters=genai.protos.Schema(
-                    type=genai.protos.Type.OBJECT,
+                parameters=types.Schema(
+                    type=types.Type.OBJECT,
                     properties={
-                        "section_name": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "section_name": types.Schema(
+                            type=types.Type.STRING,
                             description="Section name, e.g. 'CS Sem-3 Section-A'"
                         ),
-                        "semester_id": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "semester_id": types.Schema(
+                            type=types.Type.STRING,
                             description="Semester ID"
                         ),
                     },
                     required=["section_name", "semester_id"]
                 ),
             ),
-            genai.protos.FunctionDeclaration(
+            types.FunctionDeclaration(
                 name="get_conflicts_summary",
                 description="Get a summary of all conflicts in the current timetable",
-                parameters=genai.protos.Schema(
-                    type=genai.protos.Type.OBJECT,
+                parameters=types.Schema(
+                    type=types.Type.OBJECT,
                     properties={
-                        "semester_id": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "semester_id": types.Schema(
+                            type=types.Type.STRING,
                             description="Semester ID"
                         ),
                     },
                     required=["semester_id"]
                 ),
             ),
-            genai.protos.FunctionDeclaration(
+            types.FunctionDeclaration(
                 name="get_room_utilization",
                 description="Get room utilization statistics",
-                parameters=genai.protos.Schema(
-                    type=genai.protos.Type.OBJECT,
+                parameters=types.Schema(
+                    type=types.Type.OBJECT,
                     properties={
-                        "semester_id": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "semester_id": types.Schema(
+                            type=types.Type.STRING,
                             description="Semester ID"
                         ),
-                        "room_number": genai.protos.Schema(
-                            type=genai.protos.Type.STRING,
+                        "room_number": types.Schema(
+                            type=types.Type.STRING,
                             description="Specific room number, or empty for all rooms"
                         ),
                     },
@@ -144,6 +144,7 @@ TIMETABLE_TOOLS = [
         ]
     )
 ]
+
 
 
 def execute_tool(tool_name: str, args: dict, user=None) -> dict:

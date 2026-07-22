@@ -4,7 +4,16 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from weasyprint import HTML
+try:
+    from weasyprint import HTML
+    WEASYPRINT_AVAILABLE = True
+except (ImportError, OSError):
+    WEASYPRINT_AVAILABLE = False
+    class HTML:
+        def __init__(self, *args, **kwargs):
+            pass
+        def write_pdf(self, *args, **kwargs):
+            raise ImportError("WeasyPrint / GTK libraries are not installed on this system. PDF generation is unavailable.")
 
 from apps.authentication.permissions import IsStudent
 from apps.students.models import StudentProfile, StudentEnrollment
