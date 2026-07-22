@@ -33,6 +33,13 @@ class IncrementalValidator:
 
         # Find what slot_numbers the new position would occupy
         if new_slot_start is not None:
+            # Grid alignment check
+            GRID_START_SLOTS = {0, 2, 4, 6, 9, 11, 13}
+            if new_slot_start not in GRID_START_SLOTS:
+                conflicts.append({
+                    "type": "GRID_ALIGNMENT",
+                    "message": "Classes must start at grid boundaries (9:30, 10:30, 11:30, 12:30, 14:15, 15:15, 16:15).",
+                })
             target_slot_numbers = list(range(new_slot_start, new_slot_start + duration))
         else:
             target_slot_numbers = [ts.slot_number for ts in current_time_slots]

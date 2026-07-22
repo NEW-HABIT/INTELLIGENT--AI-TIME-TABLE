@@ -291,7 +291,28 @@ class TimetableSlotViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_409_CONFLICT,
             )
 
+        new_day = request.data.get("day")
+        new_slot_start = request.data.get("slot_start")
+
         serializer.save(is_manual_override=True)
+
+        if new_day is not None or new_slot_start is not None:
+            from apps.core.models import TimeSlot
+            current_time_slots = list(slot.time_slots.order_by("slot_number"))
+            duration = len(current_time_slots) or (6 if slot.is_lab_block else 2)
+
+            target_day = int(new_day) if new_day is not None else slot.day
+            if new_slot_start is not None:
+                target_slot_start = int(new_slot_start)
+            else:
+                target_slot_start = current_time_slots[0].slot_number if current_time_slots else 0
+
+            new_slots = list(TimeSlot.objects.filter(
+                day=target_day,
+                slot_number__in=range(target_slot_start, target_slot_start + duration)
+            ))
+            slot.time_slots.set(new_slots)
+
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"])

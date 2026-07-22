@@ -1,59 +1,59 @@
-# ═══════════════════════════════════════════════════════════
-# The Neotia University Timetable System — Python Requirements
-# ═══════════════════════════════════════════════════════════
+# ============================================================
+# The Neotia University Timetable System - Python Requirements
+# ============================================================
 
-# ── Django Core ──────────────────────────────────────────
+# -- Django Core ----------------------------------------------
 Django==5.1.4
 djangorestframework==3.15.2
 django-cors-headers==4.6.0
 django-filter==24.3
 django-extensions==3.2.3
 
-# ── Authentication ────────────────────────────────────────
+# -- Authentication -------------------------------------------
 djangorestframework-simplejwt==5.3.1
 
-# ── Database ──────────────────────────────────────────────
+# -- Database -------------------------------------------------
 psycopg2-binary==2.9.12
 dj-database-url==2.3.0
 
-# ── Cache & Async ─────────────────────────────────────────
+# -- Cache & Async --------------------------------------------
 redis==5.2.1
 django-redis==5.4.0
 channels==4.1.0
 channels-redis==4.2.1
 daphne==4.1.2
 
-# ── Celery (Task Queue) ───────────────────────────────────
+# -- Celery (Task Queue) --------------------------------------
 celery==5.4.0
 django-celery-beat==2.7.0
 django-celery-results==2.5.1
 flower==2.0.1
 
-# ── OR-Tools Scheduling Engine ────────────────────────────
+# -- OR-Tools Scheduling Engine -------------------------------
 ortools>=9.11
 
-# ── Google Gemini AI ──────────────────────────────────────
+# -- Google Gemini AI -----------------------------------------
 google-genai>=1.0.0
 google-api-core>=2.19.1
 
-# ── API Documentation ─────────────────────────────────────
+# -- API Documentation ----------------------------------------
 drf-spectacular==0.27.2
 
-# ── Export: PDF & Excel ───────────────────────────────────
-# weasyprint==63.1  # Disabled: requires libcairo/libpango — not available on Render free tier
+# -- Export: PDF & Excel --------------------------------------
+# weasyprint==63.1  # Disabled: requires libcairo/libpango - not available on Render free tier
 openpyxl==3.1.5
 Pillow>=11.1.0
 
-# ── Production Server ─────────────────────────────────────
+# -- Production Server ----------------------------------------
 gunicorn==23.0.0
 uvicorn[standard]==0.32.1
 whitenoise==6.8.2
 
-# ── Monitoring & Logging ──────────────────────────────────
+# -- Monitoring & Logging -------------------------------------
 sentry-sdk[django]==2.19.2
 django-silk==5.3.2
 
-# ── Testing ───────────────────────────────────────────────
+# -- Testing --------------------------------------------------
 pytest==8.3.4
 pytest-django==4.9.0
 pytest-asyncio==0.24.0
@@ -61,10 +61,10 @@ factory-boy==3.3.1
 faker==33.1.0
 coverage==7.6.10
 
-# ── Code Quality ──────────────────────────────────────────
+# -- Code Quality ---------------------------------------------
 ruff==0.8.4
 
-# ── Utilities ─────────────────────────────────────────────
+# -- Utilities ------------------------------------------------
 python-dotenv==1.0.1
 python-decouple==3.8
 icalendar==6.1.0

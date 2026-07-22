@@ -209,12 +209,16 @@ class TimetableSolver:
         for alloc in alloc_data:
             alloc_id = alloc["id"]
             is_lab = alloc["is_lab"]
-            # Lab takes 6 consecutive 30-min slots; theory takes 2
-            duration = self.LAB_SLOT_COUNT if is_lab else self.THEORY_SLOT_COUNT
+            duration = alloc["session_duration"]
 
             for day in days:
                 # Possible start slots (must leave room for full duration + not cross lunch)
                 for slot_start in range(slots_per_day - duration + 1):
+                    # Enforce classes to only start aligned with the grid boundaries
+                    # (0=9:30, 2=10:30, 4=11:30, 6=12:30, 9=14:15, 11=15:15, 13=16:15)
+                    if slot_start not in {0, 2, 4, 6, 9, 11, 13}:
+                        continue
+
                     # Check if this window crosses lunch break
                     if self._crosses_lunch(slot_start, duration, day):
                         continue
@@ -248,8 +252,7 @@ class TimetableSolver:
             if self.solver.Value(var) == 1:
                 alloc = alloc_map[alloc_id]
                 room = room_map[room_id]
-                is_lab = alloc["is_lab"]
-                duration = self.LAB_SLOT_COUNT if is_lab else self.THEORY_SLOT_COUNT
+                duration = alloc["session_duration"]
 
                 # Convert slot indices to actual time
                 start_minutes = 9 * 60 + 30 + (slot_start * 30)  # 9:30 base
@@ -264,7 +267,7 @@ class TimetableSolver:
                     "day": day,
                     "slot_start": slot_start,
                     "slot_end": slot_start + duration,
-                    "is_lab": is_lab,
+                    "is_lab": alloc["is_lab"],
                     "start_time": f"{start_minutes // 60:02d}:{start_minutes % 60:02d}",
                     "end_time": f"{end_minutes // 60:02d}:{end_minutes % 60:02d}",
                     "room_number": room["number"],

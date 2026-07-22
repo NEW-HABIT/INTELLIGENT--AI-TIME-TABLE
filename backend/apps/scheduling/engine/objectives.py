@@ -65,7 +65,7 @@ class SoftObjective:
         for (alloc_id, day, slot_start, room_id), var in self.vars.items():
             alloc = self._alloc_map[alloc_id]
             section_id = alloc["section_id"]
-            duration = 6 if alloc["is_lab"] else 2
+            duration = alloc.get("session_duration", 6 if alloc["is_lab"] else 2)
             for s in range(slot_start, slot_start + duration):
                 section_day_slot_occupied.setdefault((section_id, day, s), []).append(var)
 
@@ -205,7 +205,7 @@ class SoftObjective:
         for (alloc_id, day, slot_start, room_id), var in self.vars.items():
             alloc = alloc_map[alloc_id]
             fac_id = alloc["faculty_id"]
-            duration = 6 if alloc["is_lab"] else 2
+            duration = alloc.get("session_duration", 6 if alloc["is_lab"] else 2)
             for s in range(slot_start, slot_start + duration):
                 faculty_slot_vars.setdefault((fac_id, day, s), []).append(var)
 

@@ -119,7 +119,9 @@ def generate_timetable(self, generation_id: str):
             # Save each scheduled slot
             slots_to_create = []
             for sched in result.timetable:
-                alloc = alloc_map.get(str(sched["allocation_id"]))
+                # Strip virtual suffixes (_2h, _1h) if present
+                orig_alloc_id = str(sched["allocation_id"]).split("_")[0]
+                alloc = alloc_map.get(orig_alloc_id)
                 room = room_map.get(str(sched["room_id"]))
                 if not alloc or not room:
                     continue

@@ -60,29 +60,83 @@ class DataLoader:
             "subject", "faculty__user", "section__program"
         ).prefetch_related("section__enrollments")
 
+        # Build parent-child section relationships
+        parent_sections = {}
+        from apps.scheduling.models import Section
+        for sec in Section.objects.filter(semester=semester, is_active=True):
+            if sec.parent_section_id:
+                parent_sections[str(sec.id)] = str(sec.parent_section_id)
+
         allocations = []
         for alloc in allocations_qs:
             enrolled = alloc.section.enrollments.filter(is_active=True).count()
-            weekly_sessions = max(1, alloc.weekly_hours // 2)  # 2h per session for theory
             if alloc.subject.is_lab:
+                weekly_hours = alloc.weekly_hours_override or alloc.subject.weekly_hours
                 weekly_sessions = alloc.subject.lab_hours_per_week  # 1 session = 3h block
+                allocations.append({
+                    "id": str(alloc.id),
+                    "subject_id": str(alloc.subject.id),
+                    "subject_code": alloc.subject.code,
+                    "subject_name": alloc.subject.name,
+                    "faculty_id": str(alloc.faculty.id),
+                    "faculty_name": alloc.faculty.user.full_name,
+                    "section_id": str(alloc.section.id),
+                    "section_name": str(alloc.section),
+                    "parent_section_id": str(alloc.section.parent_section_id) if alloc.section.parent_section_id else None,
+                    "is_lab": True,
+                    "weekly_hours": weekly_hours,
+                    "weekly_sessions": weekly_sessions,
+                    "session_duration": 6,  # 3 hours = 6 slots
+                    "enrolled_students": enrolled,
+                    "difficulty_level": alloc.subject.difficulty_level,
+                    "max_weekly_hours_faculty": alloc.faculty.max_weekly_hours,
+                })
+            else:
+                # Theory classes: weekly_hours is credit-based
+                weekly_hours = alloc.weekly_hours_override or alloc.subject.credits
+                # Split into 2-hour blocks and a remaining 1-hour block if credits are odd
+                num_2h = weekly_hours // 2
+                num_1h = weekly_hours % 2
 
-            allocations.append({
-                "id": str(alloc.id),
-                "subject_id": str(alloc.subject.id),
-                "subject_code": alloc.subject.code,
-                "subject_name": alloc.subject.name,
-                "faculty_id": str(alloc.faculty.id),
-                "faculty_name": alloc.faculty.user.full_name,
-                "section_id": str(alloc.section.id),
-                "section_name": str(alloc.section),
-                "is_lab": alloc.subject.is_lab,
-                "weekly_hours": alloc.weekly_hours,
-                "weekly_sessions": weekly_sessions,
-                "enrolled_students": enrolled,
-                "difficulty_level": alloc.subject.difficulty_level,
-                "max_weekly_hours_faculty": alloc.faculty.max_weekly_hours,
-            })
+                if num_2h > 0:
+                    allocations.append({
+                        "id": f"{alloc.id}_2h",
+                        "subject_id": str(alloc.subject.id),
+                        "subject_code": alloc.subject.code,
+                        "subject_name": alloc.subject.name,
+                        "faculty_id": str(alloc.faculty.id),
+                        "faculty_name": alloc.faculty.user.full_name,
+                        "section_id": str(alloc.section.id),
+                        "section_name": str(alloc.section),
+                        "parent_section_id": str(alloc.section.parent_section_id) if alloc.section.parent_section_id else None,
+                        "is_lab": False,
+                        "weekly_hours": num_2h * 2,
+                        "weekly_sessions": num_2h,
+                        "session_duration": 4,  # 2 hours = 4 slots
+                        "enrolled_students": enrolled,
+                        "difficulty_level": alloc.subject.difficulty_level,
+                        "max_weekly_hours_faculty": alloc.faculty.max_weekly_hours,
+                    })
+
+                if num_1h > 0:
+                    allocations.append({
+                        "id": f"{alloc.id}_1h",
+                        "subject_id": str(alloc.subject.id),
+                        "subject_code": alloc.subject.code,
+                        "subject_name": alloc.subject.name,
+                        "faculty_id": str(alloc.faculty.id),
+                        "faculty_name": alloc.faculty.user.full_name,
+                        "section_id": str(alloc.section.id),
+                        "section_name": str(alloc.section),
+                        "parent_section_id": str(alloc.section.parent_section_id) if alloc.section.parent_section_id else None,
+                        "is_lab": False,
+                        "weekly_hours": num_1h * 1,
+                        "weekly_sessions": num_1h,
+                        "session_duration": 2,  # 1 hour = 2 slots
+                        "enrolled_students": enrolled,
+                        "difficulty_level": alloc.subject.difficulty_level,
+                        "max_weekly_hours_faculty": alloc.faculty.max_weekly_hours,
+                    })
 
         # ── Rooms ─────────────────────────────────────────────────────────
         rooms = []
@@ -180,4 +234,5 @@ class DataLoader:
             "constraint_weights": constraint_weights,
             "num_workers": self.config.get("num_workers", 2),
             "include_saturday": self.config.get("include_saturday", False),
+            "parent_sections": parent_sections,
         }

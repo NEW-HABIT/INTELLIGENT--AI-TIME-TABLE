@@ -123,8 +123,7 @@ class ConflictExplainer:
 
         for alloc in self.allocations:
             fac_id = alloc["faculty_id"]
-            is_lab = alloc["is_lab"]
-            duration = 6 if is_lab else 2
+            duration = alloc.get("session_duration", 6 if is_lab else 2)
             fac_unavail = unavail.get(fac_id, {})
 
             viable_slots = 0

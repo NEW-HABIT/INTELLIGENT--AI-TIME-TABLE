@@ -308,11 +308,36 @@ def _move_timetable_slot(args: dict, user=None) -> dict:
         except Room.DoesNotExist:
             return {"success": False, "error": f"Room '{args['new_room_number']}' not found"}
 
+    new_start_time = args.get("new_start_time")
+    new_slot_start = None
+    if new_start_time:
+        time_to_slot = {
+            "09:30": 0, "9:30": 0,
+            "10:00": 1,
+            "10:30": 2,
+            "11:00": 3,
+            "11:30": 4,
+            "12:00": 5,
+            "12:30": 6,
+            "13:15": 7,
+            "13:45": 8,
+            "14:15": 9,
+            "14:45": 10,
+            "15:15": 11,
+            "15:45": 12,
+            "16:15": 13,
+        }
+        clean_time = new_start_time.strip().replace(" ", "")
+        new_slot_start = time_to_slot.get(clean_time)
+        if new_slot_start is None:
+            return {"success": False, "error": f"Invalid start time '{new_start_time}'. Must match a standard period start time."}
+
     validator = IncrementalValidator(slot.generation)
     conflicts = validator.validate_slot_move(
         slot=slot,
         new_room_id=str(new_room.id) if new_room else None,
         new_day=new_day,
+        new_slot_start=new_slot_start,
     )
 
     if conflicts:
@@ -327,6 +352,21 @@ def _move_timetable_slot(args: dict, user=None) -> dict:
         slot.day = new_day
     if new_room:
         slot.room = new_room
+
+    if new_day is not None or new_slot_start is not None:
+        from apps.core.models import TimeSlot
+        current_time_slots = list(slot.time_slots.order_by("slot_number"))
+        duration = len(current_time_slots) or (6 if slot.is_lab_block else 2)
+
+        target_day = new_day if new_day is not None else slot.day
+        target_slot_start = new_slot_start if new_slot_start is not None else (current_time_slots[0].slot_number if current_time_slots else 0)
+
+        new_slots = list(TimeSlot.objects.filter(
+            day=target_day,
+            slot_number__in=range(target_slot_start, target_slot_start + duration)
+        ))
+        slot.time_slots.set(new_slots)
+
     slot.is_manual_override = True
     slot.save()
 
@@ -335,6 +375,7 @@ def _move_timetable_slot(args: dict, user=None) -> dict:
         "message": f"Slot moved successfully",
         "new_day": args.get("new_day", "unchanged"),
         "new_room": args.get("new_room_number", "unchanged"),
+        "new_start_time": args.get("new_start_time", "unchanged"),
     }
 
 

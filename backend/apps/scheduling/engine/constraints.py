@@ -37,7 +37,7 @@ class HardConstraints:
 
         for (alloc_id, day, slot_start, room_id), var in self.vars.items():
             alloc = alloc_map[alloc_id]
-            duration = 6 if alloc["is_lab"] else 2  # 30-min units
+            duration = alloc["session_duration"]
 
             # Room indexing — for each slot in the duration window
             for s in range(slot_start, slot_start + duration):
@@ -88,11 +88,32 @@ class HardConstraints:
         HC-3: A student section cannot be in two classes at the same time.
         """
         added = 0
+        # 1. Enforce standard no-clash (same section cannot have two classes at same time)
         for (day, slot, section_id), var_list in self._by_section_slot.items():
             if len(var_list) > 1:
                 self.model.AddAtMostOne(var_list)
                 added += 1
-        logger.debug(f"HC-3 no_section_clash: {added} constraints added")
+
+        # 2. Enforce parent-child no-clash
+        parent_sections = self.data.get("parent_sections", {})
+        children_by_parent = {}
+        for child_id, parent_id in parent_sections.items():
+            children_by_parent.setdefault(parent_id, []).append(child_id)
+
+        days = self.data["days"]
+        slots_per_day = self.data["slots_per_day"]
+
+        for parent_id, child_ids in children_by_parent.items():
+            for day in days:
+                for slot in range(slots_per_day):
+                    parent_vars = self._by_section_slot.get((day, slot, parent_id), [])
+                    for child_id in child_ids:
+                        child_vars = self._by_section_slot.get((day, slot, child_id), [])
+                        if parent_vars and child_vars:
+                            self.model.Add(sum(parent_vars) + sum(child_vars) <= 1)
+                            added += 1
+
+        logger.debug(f"HC-3 no_section_clash: {added} constraints added (including parent-child checks)")
 
     def each_allocation_scheduled(self):
         """
