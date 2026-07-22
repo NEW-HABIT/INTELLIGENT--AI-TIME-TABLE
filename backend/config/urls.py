@@ -3,9 +3,23 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+import datetime
+
+
+def health_check(request):
+    """Simple health check endpoint for Render uptime monitoring."""
+    return JsonResponse({
+        "status": "ok",
+        "service": "tnu-backend",
+        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+    })
 
 urlpatterns = [
+    # Health check (used by Render uptime monitoring)
+    path("api/health/", health_check, name="health-check"),
+
     # Django Admin
     path("django-admin/", admin.site.urls),
 

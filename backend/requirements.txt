@@ -40,7 +40,7 @@ google-api-core>=2.19.1
 drf-spectacular==0.27.2
 
 # ── Export: PDF & Excel ───────────────────────────────────
-weasyprint==63.1
+# weasyprint==63.1  # Disabled: requires libcairo/libpango — not available on Render free tier
 openpyxl==3.1.5
 Pillow>=11.1.0
 
