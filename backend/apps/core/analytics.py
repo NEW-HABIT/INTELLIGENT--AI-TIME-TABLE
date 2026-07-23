@@ -46,15 +46,16 @@ class AnalyticsViewSet(viewsets.ViewSet):
 
         has_slots = False
         if active_gen:
-            has_slots = TimetableSlot.objects.filter(generation=active_gen, slot_type="REGULAR").exists()
+            # NOTE: TimetableSlot has no slot_type field; just check for any slot
+            has_slots = TimetableSlot.objects.filter(generation=active_gen).exists()
 
         if has_slots and active_gen:
             for day_int, day_label in enumerate(day_names):
                 classes_on_day = TimetableSlot.objects.filter(
-                    generation=active_gen, day=day_int, slot_type="REGULAR"
+                    generation=active_gen, day=day_int
                 ).count()
                 rooms_on_day = TimetableSlot.objects.filter(
-                    generation=active_gen, day=day_int, slot_type="REGULAR"
+                    generation=active_gen, day=day_int
                 ).values("room").distinct().count()
                 weekly_load.append({
                     "day": day_label,
@@ -152,7 +153,8 @@ class AnalyticsViewSet(viewsets.ViewSet):
         URL: /api/analytics/overview/
         """
         rooms_count = Room.objects.filter(is_active=True).count()
-        slots_per_day = TimeSlot.objects.filter(is_active=True, slot_type="REGULAR", day=0).count() or 12
+        from apps.core.models import SlotType
+        slots_per_day = TimeSlot.objects.filter(is_active=True, slot_type=SlotType.REGULAR, day=0).count() or 12
         total_weekly_capacity = rooms_count * (slots_per_day * 6)
 
         active_gen = TimetableGeneration.objects.filter(is_active=True).first()
@@ -162,12 +164,13 @@ class AnalyticsViewSet(viewsets.ViewSet):
             ).order_by("-created_at").first()
 
         # 1. Overall Load & Room Util
+        # NOTE: TimetableSlot has no slot_type field; just check for any slot
         has_slots = False
         if active_gen:
-            has_slots = TimetableSlot.objects.filter(generation=active_gen, slot_type="REGULAR").exists()
+            has_slots = TimetableSlot.objects.filter(generation=active_gen).exists()
 
         if has_slots and active_gen:
-            scheduled_classes = TimetableSlot.objects.filter(generation=active_gen, slot_type="REGULAR").count()
+            scheduled_classes = TimetableSlot.objects.filter(generation=active_gen).count()
             overall_load_str = f"{scheduled_classes} Classes"
             overall_load_change = f"Active generation v{active_gen.version}"
             room_util_pct = round((scheduled_classes / total_weekly_capacity) * 100, 1) if total_weekly_capacity > 0 else 0.0
@@ -238,8 +241,8 @@ class AnalyticsViewSet(viewsets.ViewSet):
         weekly_load = []
         for day_int, day_name in enumerate(day_names_full):
             if has_slots and active_gen:
-                c_count = TimetableSlot.objects.filter(generation=active_gen, day=day_int, slot_type="REGULAR").count()
-                r_count = TimetableSlot.objects.filter(generation=active_gen, day=day_int, slot_type="REGULAR").values("room").distinct().count()
+                c_count = TimetableSlot.objects.filter(generation=active_gen, day=day_int).count()
+                r_count = TimetableSlot.objects.filter(generation=active_gen, day=day_int).values("room").distinct().count()
                 day_cap = rooms_count * slots_per_day
                 util = round((c_count / day_cap) * 100, 1) if day_cap > 0 else 0.0
             else:
